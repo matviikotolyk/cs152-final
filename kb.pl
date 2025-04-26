@@ -48,6 +48,14 @@ high_pollution_area(se5).  % Camberwell - high traffic density
 high_pollution_area(cr4).  % Mitcham - industrial zone
 high_pollution_area(n15).  % South Tottenham - congested area
 
+% === Income-based Adjustments ===
+% Defines how income levels affect the year thresholds
+% Low income owners get 3 years grace period
+% High income owners are expected to comply 2 years earlier
+income_year_adjustment(low, 3).     % 3 years extra time to comply
+income_year_adjustment(high, -2).    % Must comply 2 years earlier
+income_year_adjustment(medium, 0).   % Standard timeline
+
 % === Exemption and Permit Rules ===
 
 % Vehicles that are electric or hybrid are always allowed
@@ -59,23 +67,21 @@ allowed(VehicleID) :-
 
 % Diesel and petrol vehicles must meet year standards unless exempted
 restricted_due_to_emission(VehicleID) :-
-    vehicle(VehicleID, _, diesel, Year, _, _),
-    threshold(diesel, MaxYear),
-    Year < MaxYear.
-
-restricted_due_to_emission(VehicleID) :-
-    vehicle(VehicleID, _, petrol, Year, _, _),
-    threshold(petrol, MaxYear),
-    Year < MaxYear.
+    vehicle(VehicleID, _, FuelType, Year, Income, _),
+    threshold(FuelType, BaseMaxYear),
+    income_year_adjustment(Income, Adjustment),
+    AdjustedMaxYear is BaseMaxYear + Adjustment,
+    Year < AdjustedMaxYear.
 
 % Pollution Distribution Permits
 % Vehicles from high pollution areas may be allowed to enter LEZ
 % to prevent pollution concentration in already affected areas
 eligible_for_distribution_permit(VehicleID) :-
-    vehicle(VehicleID, _, FuelType, Year, _, Postcode),
+    vehicle(VehicleID, _, FuelType, Year, Income, Postcode),
     (FuelType = diesel; FuelType = petrol),
     high_pollution_area(Postcode),
-    restricted_due_to_emission(VehicleID).
+    % For high pollution areas, give additional grace period for low income
+    (Income = low -> true ; restricted_due_to_emission(VehicleID)).
 
 % Main rule: Can a vehicle enter a given LEZ?
 can_enter(VehicleID, Zone) :-
@@ -90,15 +96,19 @@ cannot_enter(VehicleID, Zone) :-
 
 % Explanation helper
 explain_restriction(VehicleID, Reason) :-
+    vehicle(VehicleID, _, _, _, Income, Postcode),
     restricted_due_to_emission(VehicleID),
-    vehicle(VehicleID, _, _, _, _, Postcode),
     \+ high_pollution_area(Postcode),
-    Reason = 'Vehicle does not meet emission standards and is from a low pollution area. Consider using LEZ in your area.'.
+    (Income = high ->
+        Reason = 'Vehicle does not meet stricter emission standards required for high-income owners.'
+    ;
+        Reason = 'Vehicle does not meet emission standards. Since your area has lower pollution levels, please use a different route instead.'
+    ).
 
 explain_restriction(VehicleID, Reason) :-
     vehicle(VehicleID, _, FuelType, _, _, _),
     (FuelType = diesel; FuelType = petrol),
-    Reason = 'Fuel type restricted in the LEZ.'.
+    Reason = 'This type of fuel is restricted in the LEZ.'.
 
 % === Process Query and Output ===
 % These predicates handle the Python-Prolog interface

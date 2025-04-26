@@ -19,12 +19,12 @@ optional_income(IncomeLevel) -->
     income(IncomeLevel), !.
 optional_income(medium) --> [].
 
-% Optional location - defaults to 'unknown' if not specified
+% Optional location - defaults to zone's postcode if not specified
 optional_location(Postcode) -->
     [from], postcode(Postcode), !.
 optional_location(Postcode) -->
     postcode(Postcode), !.
-optional_location('unknown') --> [].
+optional_location(unknown) --> [].
 
 % Components
 year(Year) --> 
@@ -62,7 +62,7 @@ zone(Zone) --> [Zone], { atom(Zone) }.
 
 % Debug predicate for development
 debug_tokens(Tokens) :-
-    write('DEBUG: Tokens received: '),
+    write('DEBUG: Could not parse: '),
     write(Tokens),
     nl.
 

@@ -1,6 +1,6 @@
 # Low Emission Zone (LEZ) Access Expert System
 
-An expert system that helps determine if a vehicle can enter specific London Low Emission Zones based on various factors including vehicle type, age, fuel type, and area of origin.
+An expert system that helps determine if a vehicle can enter specific London Low Emission Zones based on various factors including vehicle type, age, income level, fuel type, and area of origin.
 
 ## Key Features
 
