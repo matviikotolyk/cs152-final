@@ -1,1 +1,4 @@
-pyswip==0.2.10
+# No Python dependencies required
+# System requirements:
+# - Python 3.6+
+# - SWI-Prolog (swipl)
